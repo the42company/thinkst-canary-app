@@ -1,0 +1,124 @@
+<dashboard theme="light" hideTitle="false" version="1.1">
+  <label>Incident View</label>
+  <row>
+    <panel>
+      <title>$incidentDescription$ on $canaryName$ ($flockName$)</title>
+      <html>
+        <table style="width:100%; text-align:left">
+          <tr>
+            <th style="width:25%;">Time since incident</th>
+            <th style="width:25%;">Timestamp</th>
+            <th style="width:25%;">Status</th>
+            <th style="width:25%;">Source IP</th>
+          </tr>
+          <tr>
+            <td>$timeSince$</td>
+            <td>$incidentTimestamp$</td>
+            <td>$incidentStatus$</td>
+            <td>$sourceHost$</td>
+          </tr>
+        </table>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <table style="width:100%; text-align:left;">
+          <tr>
+            <th style="width:25%;"> </th>
+            <th style="width:25%;">Canary</th>
+            <th style="width:25%;">Location</th>
+            <th style="width:25%;">Flock</th>
+          </tr>
+          <tr>
+            <td> </td>
+            <td>$canaryName$</td>
+            <td>$canaryLocation$</td>
+            <td>$flockName$</td>
+          </tr>
+        </table>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <event>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:incident"
+| spath hash_id
+| search hash_id=$tkn_hashId$
+| dedup hash_id
+| eval node_id='description.node_id'
+| join type=left node_id
+    [ search sourcetype="canarytools:device"
+    | eval node_id=id
+    | stats values(location) AS canaryLocation BY node_id
+        ]
+| eval timeDiff=now()-updated_time
+| eval timeFloor=case(timeDiff&gt;=60 AND timeDiff&lt;3600, floor(timeDiff/60), timeDiff&gt;=3600 AND timeDiff&lt;86400, floor(timeDiff/3600), timeDiff&gt;=86400 AND timeDiff&lt;604800, floor(timeDiff/86400), timeDiff&gt;604800, floor(timeDiff/604800), true(), timeDiff)
+| eval timeMeasure=case(timeDiff&lt;60, "seconds", timeDiff&gt;=60 AND timeDiff&lt;120, "minute", timeDiff&gt;=120 AND timeDiff&lt;3600, "minutes", timeDiff&gt;=3600 AND timeDiff&lt;7200, "hour", timeDiff&gt;=7200 AND timeDiff&lt;86400, "hours", timeDiff&gt;=86400 AND timeDiff&lt;172800, "day", timeDiff&gt;=172800 AND timeDiff&lt;604800, "days", timeDiff&gt;=604800 AND timeDiff&lt;1209600, "week", timeDiff&gt;1209600, "weeks")
+| eval timeSince=timeFloor." ".timeMeasure." "."ago"
+| convert timeformat="%Y-%m-%dT%H:%M:%S %z" ctime(_time) AS incidentTimestamp
+| eval incidentStatus=if('description.acknowledged'="True", "Acknowledged", "Unacknowledged")
+| eval canaryName='description.name'
+| eval incidentDescription='description.description'
+| eval canaryLocation=if(isnull(canaryLocation), "N/A", canaryLocation)
+| eval flockName='description.flock_name'
+| eval sourceHost='description.src_host'
+| eval canaryConsole='canary_console'
+| table timeSince incidentTimestamp incidentStatus canaryName incidentDescription canaryLocation flockName sourceHost canaryConsole
+          </query>
+          <earliest>0</earliest>
+          <latest>now</latest>
+          <done>
+            <set token="timeSince">$result.timeSince$</set>
+            <set token="incidentTimestamp">$result.incidentTimestamp$</set>
+            <set token="incidentStatus">$result.incidentStatus$</set>
+            <set token="canaryName">$result.canaryName$</set>
+            <set token="incidentDescription">$result.incidentDescription$</set>
+            <set token="canaryLocation">$result.canaryLocation$</set>
+            <set token="flockName">$result.flockName$</set>
+            <set token="sourceHost">$result.sourceHost$</set>
+            <set token="canaryConsole">$result.canaryConsole$</set>
+          </done>
+        </search>
+      </event>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <table style="width:100%; text-align:left">
+          <tr>
+            <td style="width:50%;">Expand the "description"and "events" nodes in the panel above to view the raw event information.</td>
+            <td><a href="https://$canaryConsole$/nest/incident/$tkn_hashId$" target="_blank">View on Canary Console</a></td>
+            <td style="width:25%;"> </td>
+          </tr>
+        </table>
+      </html>
+    </panel>
+  </row>
+  <row depends="$hide$">
+    <panel>
+      <html>
+       <style>
+        html, body {
+          height: 100%;
+          }
+        .dashboard-panel {
+          border-radius:5px;
+          padding: 5px;
+          }
+        .dashboard-body{
+          background-image: linear-gradient(to right, #018478 , #04E262);
+          height: 100%;
+          }
+        .dashboard-header-title{
+          color: #ffffff;
+          }
+       </style>
+     </html>
+    </panel>
+  </row>
+</dashboard>

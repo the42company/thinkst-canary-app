@@ -1,0 +1,83 @@
+<form stylesheet="custom_timepicker.css" version="1.1">
+  <label>Audit</label>
+  <fieldset submitButton="false">
+    <input type="time" token="tkn_time" searchWhenChanged="true">
+      <label>Select a time range:</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="tkn_action" searchWhenChanged="true">
+      <label>Action:</label>
+      <fieldForLabel>action_type</fieldForLabel>
+      <fieldForValue>action_type</fieldForValue>
+      <search>
+        <query>`canarytools_index` sourcetype="canarytools:audit"
+| dedup action_type
+| table action_type
+| sort action_type</query>
+        <earliest>$tkn_time.earliest$</earliest>
+        <latest>$tkn_time.latest$</latest>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="dropdown" token="tkn_flockName" searchWhenChanged="true">
+      <label>Flock Name:</label>
+        <choice value="null">N/A</choice>
+      <fieldForLabel>flock_name</fieldForLabel>
+      <fieldForValue>flock_name</fieldForValue>
+      <search>
+        <query>`canarytools_index` sourcetype="canarytools:audit" flock_name!="null"
+| dedup flock_name
+| table flock_name
+| sort flock_name</query>
+        <earliest>$tkn_time.earliest$</earliest>
+        <latest>$tkn_time.latest$</latest>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="dropdown" token="tkn_user" searchWhenChanged="true">
+      <label>User:</label>
+      <fieldForLabel>user</fieldForLabel>
+      <fieldForValue>user</fieldForValue>
+      <search>
+        <query>`canarytools_index` sourcetype="canarytools:audit"
+| dedup user
+| table user
+| sort user</query>
+        <earliest>$tkn_time.earliest$</earliest>
+        <latest>$tkn_time.latest$</latest>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:audit" action_type="$tkn_action$" flock_name="$tkn_flockName$" user="$tkn_user$"
+| dedup id _time
+| eval flock_name=if(flock_name="null", "N/A", flock_name)
+| table _time action_type flock_name user message
+| convert timeformat="%Y-%m-%d %H:%M:%S" ctime(_time)
+| sort - _time
+| rename _time AS "Time" action_type AS "Action Type" flock_name AS "Flock Name" user AS "User" message AS "Message"</query>
+          <earliest>$tkn_time.earliest$</earliest>
+          <latest>$tkn_time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>

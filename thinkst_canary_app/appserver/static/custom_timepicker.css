@@ -1,0 +1,24 @@
+/* ------------------------------------------------- */
+/* Hides or display specific portions of the         */
+/* Datetimepicker accordion                          */
+/* ------------------------------------------------- */
+
+/* OPTIONS
+div[data-test-panel-id='presets']
+div[data-test-panel-id='relative']
+div[data-test-panel-id='realTime']
+div[data-test-panel-id='date']
+div[data-test-panel-id='dateTime']
+div[data-test-panel-id='advanced']
+div[id^='presets_view']
+div[id^='relative_view']
+div[id^='realtime_view']
+div[id^='daterange_view']
+div[id^='dateandtimerange_view']
+div[id^='advanced_view']
+*/
+
+div[data-test='real-time-column'],
+div[data-test-panel-id='realTime'] {
+    display: none;
+}

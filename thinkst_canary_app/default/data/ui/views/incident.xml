@@ -1,0 +1,99 @@
+<form stylesheet="custom_timepicker.css" version="1.1">
+  <label>Incidents</label>
+  <fieldset submitButton="false" autoRun="false">
+    <input type="time" token="tkn_time" searchWhenChanged="true">
+      <label>Select a time range:</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="tkn_acknowledged" searchWhenChanged="true">
+      <label>Acknowledged</label>
+      <fieldForLabel>description.acknowledged</fieldForLabel>
+      <fieldForValue>description.acknowledged</fieldForValue>
+      <search>
+        <query>`canarytools_index` sourcetype="canarytools:incident"
+        | dedup description.acknowledged
+        | table description.acknowledged
+        | sort description.acknowledged</query>
+        <earliest>$tkn_time.earliest$</earliest>
+        <latest>$tkn_time.latest$</latest>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="dropdown" token="tkn_canaryName" searchWhenChanged="true">
+      <label>Canary Name</label>
+      <fieldForLabel>description.name</fieldForLabel>
+      <fieldForValue>description.name</fieldForValue>
+      <search>
+        <query>`canarytools_index` sourcetype="canarytools:incident"
+        | dedup description.name
+        | table description.name
+        | sort description.name</query>
+        <earliest>$tkn_time.earliest$</earliest>
+        <latest>$tkn_time.latest$</latest>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="dropdown" token="tkn_summary" searchWhenChanged="true">
+      <label>Incident Description</label>
+      <fieldForLabel>summary</fieldForLabel>
+      <fieldForValue>summary</fieldForValue>
+      <search>
+        <query>`canarytools_index` sourcetype="canarytools:incident"
+        | dedup summary
+        | table summary
+        | sort summary</query>
+        <earliest>$tkn_time.earliest$</earliest>
+        <latest>$tkn_time.latest$</latest>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="dropdown" token="tkn_sourceHost" searchWhenChanged="true">
+      <label>Source Host</label>
+      <fieldForLabel>description.src_host</fieldForLabel>
+      <fieldForValue>description.src_host</fieldForValue>
+      <search>
+        <query>`canarytools_index` sourcetype="canarytools:incident"
+        | dedup description.src_host
+        | table description.src_host
+        | sort description.src_host</query>
+        <earliest>$tkn_time.earliest$</earliest>
+        <latest>$tkn_time.latest$</latest>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:incident" description.acknowledged="$tkn_acknowledged$" description.name="$tkn_canaryName$" summary="$tkn_summary$" description.src_host="$tkn_sourceHost$"
+          | dedup hash_id
+          | table _time description.acknowledged description.name summary description.src_host hash_id
+          | convert timeformat="%Y-%m-%d %H:%M:%S" ctime(_time)
+          | rename _time AS "Time" description.acknowledged AS "Acknowledged" description.name AS "Canary Name" summary AS "Incident Description" description.src_host AS "Source Host"</query>
+          <earliest>$tkn_time.earliest$</earliest>
+          <latest>$tkn_time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <fields>"Time", "Acknowledged", "Canary Name", "Incident Description", "Source Host"</fields>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <link target="_blank">/app/thinkst_canary_app/incident_detail?tkn_hashId=$row.hash_id$</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+</form>

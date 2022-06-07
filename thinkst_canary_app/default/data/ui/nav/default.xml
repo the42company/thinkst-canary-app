@@ -1,0 +1,6 @@
+<nav search_view="search" color="#59db8a">
+  <view name="summary" default="true" />
+  <view name="incident" />
+  <view name="audit" />
+  <view name="search"/>
+</nav>

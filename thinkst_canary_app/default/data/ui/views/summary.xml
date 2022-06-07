@@ -1,0 +1,168 @@
+<form theme="light" hideTitle="false" script="custom_layout_width.js" refresh="300" version="1.1">
+  <label>Thinkst Canary — Summary</label>
+  <description>Summary of the last 24 hours</description>
+  <row>
+    <panel>
+      <single>
+        <title>New Incidents</title>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:incident" description.acknowledged="false"
+| dedup hash_id
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Canaries Online</title>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:device" live="true"
+| timechart partial=f span=1h count
+| appendpipe
+    [ stats count
+    | where count=0]</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trendInterval">-24h</option>
+        <option name="useColors">1</option>
+      </single>
+      <single>
+        <title>Canaries Offline</title>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:device" live="false"
+| timechart partial=f span=1h count
+| appendpipe
+    [ stats count
+    | where count=0]</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trendInterval">-24h</option>
+        <option name="useColors">1</option>
+      </single>
+      <single>
+        <title>Canarytokens Deployed</title>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:canarytoken" enabled="true"
+| timechart partial=f span=1h count
+| appendpipe
+    [ stats count
+    | where count=0]</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trendInterval">-24h</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Enabled Users</title>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:user" disabled="False"
+| timechart partial=f span=1h count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trendInterval">-24h</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Incidents</title>
+        <search>
+          <query>`canarytools_index` sourcetype="canarytools:incident" description.acknowledged="false"
+| table _time description.name description.flock_name summary description.src_host hash_id
+| sort - _time
+| convert timeformat="%Y-%m-%d %H:%M:%S" ctime(_time)
+| rename _time AS "Time" description.name AS "Canary Name" description.flock_name AS "Flock Name" summary AS "Incident Description" description.src_host AS "Source Host"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">row</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <fields>["Time","Canary Name","Flock Name","Incident Description","Source Host"]</fields>
+        <drilldown>
+          <link target="_blank">/app/thinkst_canary_app/incident_detail?tkn_hashId=$row.hash_id$</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row depends="$hide$">
+    <panel>
+      <html>
+       <style>
+        html, body {
+          height: 100%;
+          }
+        .dashboard-panel {
+          border-radius:5px;
+          padding: 5px;
+          }
+        .dashboard-body{
+          background-image: linear-gradient(to right, #018478 , #04E262);
+          height: 100%;
+          }
+        .dashboard-header-title{
+          color: #ffffff;
+          }
+        .dashboard-header-description{
+          color: #ffffff;
+          }
+       </style>
+     </html>
+    </panel>
+  </row>
+</form>
